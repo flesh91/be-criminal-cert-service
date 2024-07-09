@@ -13,7 +13,7 @@ export async function getApp(): Promise<ServiceOperator<AppConfig, AppDeps & Tes
 
     await app.setConfig(config)
 
-    app.setDeps(deps)
+    await app.setDeps(deps)
 
-    return app.initialize()
+    return await app.initialize()
 }

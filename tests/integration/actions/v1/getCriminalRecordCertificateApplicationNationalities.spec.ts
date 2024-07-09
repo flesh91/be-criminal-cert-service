@@ -1,7 +1,7 @@
 import { PassportRegistrationInfo } from '@diia-inhouse/documents-service-client'
 import { ApiError, InternalServerError, ServiceUnavailableError } from '@diia-inhouse/errors'
 import TestKit from '@diia-inhouse/test'
-import { GrpcStatusCode, IdentityDocumentType } from '@diia-inhouse/types'
+import { GrpcStatusCode } from '@diia-inhouse/types'
 
 import {
     CriminalRecordCertificateApplicationNationalities,
@@ -16,6 +16,7 @@ import { getIdentityDocument, getPassportWithRegistration } from '@tests/mocks/s
 import { getApp } from '@tests/utils/getApp'
 
 import { ActionResult } from '@interfaces/actions/v1/getCriminalRecordCertificateApplicationNationalities'
+import { IdentityDocumentType } from '@interfaces/services'
 
 describe(`Action ${GetCriminalRecordCertificateApplicationNationalities.name}`, () => {
     const testKit = new TestKit()

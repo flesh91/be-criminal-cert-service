@@ -16,13 +16,20 @@ import moment from 'moment'
 
 import { GrpcClientFactory } from '@diia-inhouse/diia-app'
 
-import { GetInternalPassportWithRegistrationResponse, PassportByInnDocumentType } from '@diia-inhouse/documents-service-client'
+import {
+    GetInternalPassportWithRegistrationResponse,
+    InternalPassport,
+    PassportByInnDocumentType,
+} from '@diia-inhouse/documents-service-client'
 import TestKit, { mockInstance } from '@diia-inhouse/test'
-import { ActionVersion, IdentityDocumentType } from '@diia-inhouse/types'
+import { ActionVersion } from '@diia-inhouse/types'
 
 import DocumentsService from '@services/documents'
 
+import { documentsServiceClient } from '@tests/mocks/grpc/clients'
+
 import { AppConfig } from '@interfaces/config'
+import { IdentityDocumentType } from '@interfaces/services'
 
 describe('DocumentsService', () => {
     const testKit = new TestKit()
@@ -34,13 +41,9 @@ describe('DocumentsService', () => {
             documentsServiceAddress: 'documents.service.address.ua',
         },
     }
-    const documentsServiceClientMock = {
-        getIdentityDocument: jest.fn(),
-        getInternalPassportWithRegistration: jest.fn(),
-    }
     const grpcClientFactoryMock = mockInstance(GrpcClientFactory)
 
-    jest.spyOn(grpcClientFactoryMock, 'createGrpcClient').mockReturnValueOnce(documentsServiceClientMock)
+    jest.spyOn(grpcClientFactoryMock, 'createGrpcClient').mockReturnValueOnce(documentsServiceClient)
 
     const documentsService = new DocumentsService(grpcClientFactoryMock, config)
     const session = testKit.session.getUserSession()
@@ -50,18 +53,18 @@ describe('DocumentsService', () => {
             const { user } = session
             const identityDocument = {
                 identityType: IdentityDocumentType.InternalPassport,
-                internalPassport: testKit.docs.getInternalPassport(),
+                internalPassport: <InternalPassport>testKit.docs.generateDocument(IdentityDocumentType.InternalPassport),
             }
 
             utilsStubs.makeSession.mockReturnValueOnce(session)
             clientCallOptions.mockReturnValueOnce({})
-            documentsServiceClientMock.getIdentityDocument.mockReturnValueOnce(identityDocument)
+            jest.spyOn(documentsServiceClient, 'getIdentityDocument').mockResolvedValueOnce(identityDocument)
 
             expect(await documentsService.getIdentityDocument(user)).toEqual(identityDocument)
 
             expect(utilsStubs.makeSession).toHaveBeenCalledWith(user)
             expect(clientCallOptions).toHaveBeenCalledWith({ session, version: ActionVersion.V3 })
-            expect(documentsServiceClientMock.getIdentityDocument).toHaveBeenCalledWith({}, {})
+            expect(documentsServiceClient.getIdentityDocument).toHaveBeenCalledWith({}, {})
         })
     })
 
@@ -81,7 +84,7 @@ describe('DocumentsService', () => {
                 issueDate,
                 expirationDate,
                 department,
-            } = testKit.docs.getInternalPassport()
+            } = <InternalPassport>testKit.docs.generateDocument(IdentityDocumentType.InternalPassport)
             const internalPassportWithRegistration = <GetInternalPassportWithRegistrationResponse>{
                 registration: {
                     address: {
@@ -113,13 +116,15 @@ describe('DocumentsService', () => {
 
             utilsStubs.makeSession.mockReturnValueOnce(session)
             clientCallOptions.mockReturnValueOnce({})
-            documentsServiceClientMock.getInternalPassportWithRegistration.mockReturnValueOnce(internalPassportWithRegistration)
+            jest.spyOn(documentsServiceClient, 'getInternalPassportWithRegistration').mockResolvedValueOnce(
+                internalPassportWithRegistration,
+            )
 
             expect(await documentsService.getInternalPassportWithRegistration(user)).toEqual(internalPassportWithRegistration)
 
             expect(utilsStubs.makeSession).toHaveBeenCalledWith(user)
             expect(clientCallOptions).toHaveBeenCalledWith({ session, version: ActionVersion.V1 })
-            expect(documentsServiceClientMock.getInternalPassportWithRegistration).toHaveBeenCalledWith(
+            expect(documentsServiceClient.getInternalPassportWithRegistration).toHaveBeenCalledWith(
                 { digitalPassportRegistration: false },
                 {},
             )

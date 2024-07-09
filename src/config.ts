@@ -1,19 +1,15 @@
 import { MetricsConfig } from '@diia-inhouse/diia-app'
 
 import { AppDbConfig, ReplicaSetNodeConfig } from '@diia-inhouse/db'
-import {
-    InternalQueueConfig,
-    InternalQueueName,
-    ListenerOptions,
-    QueueConfig,
-    QueueConnectionConfig,
-    QueueConnectionType,
-    ScheduledTaskQueueName,
-} from '@diia-inhouse/diia-queue'
+import { InternalQueueConfig, ListenerOptions, QueueConfig, QueueConnectionConfig, QueueConnectionType } from '@diia-inhouse/diia-queue'
 import { EnvService } from '@diia-inhouse/env'
 import { HealthCheckConfig } from '@diia-inhouse/healthcheck'
 import { RedisConfig } from '@diia-inhouse/redis'
 import { DurationMs, GenericObject } from '@diia-inhouse/types'
+
+import serviceRulesConfig from '@src/configQueue'
+
+import { InternalQueueName, ScheduledTaskQueueName } from '@interfaces/queue'
 
 export default async (envService: EnvService, serviceName: string): Promise<GenericObject> => ({
     app: {
@@ -24,7 +20,7 @@ export default async (envService: EnvService, serviceName: string): Promise<Gene
 
     healthCheck: <HealthCheckConfig>{
         isEnabled: process.env.HEALTH_CHECK_IS_ENABLED === 'true',
-        port: process.env.HEALTH_CHECK_IS_PORT ? parseInt(process.env.HEALTH_CHECK_IS_PORT, 10) : 3000,
+        port: process.env.HEALTH_CHECK_IS_PORT ? Number.parseInt(process.env.HEALTH_CHECK_IS_PORT, 10) : 3000,
     },
 
     metrics: <MetricsConfig>{
@@ -65,13 +61,14 @@ export default async (envService: EnvService, serviceName: string): Promise<Gene
     },
 
     rabbit: <QueueConnectionConfig>{
+        serviceRulesConfig,
         [QueueConnectionType.Internal]: <InternalQueueConfig>{
             connection: {
                 hostname: process.env.RABBIT_HOST,
-                port: process.env.RABBIT_PORT ? parseInt(process.env.RABBIT_PORT, 10) : undefined,
+                port: process.env.RABBIT_PORT ? Number.parseInt(process.env.RABBIT_PORT, 10) : undefined,
                 username: process.env.RABBIT_USERNAME,
                 password: process.env.RABBIT_PASSWORD,
-                heartbeat: process.env.RABBIT_HEARTBEAT ? parseInt(process.env.RABBIT_HEARTBEAT, 10) : undefined,
+                heartbeat: process.env.RABBIT_HEARTBEAT ? Number.parseInt(process.env.RABBIT_HEARTBEAT, 10) : undefined,
             },
             socketOptions: {
                 clientProperties: {
@@ -82,19 +79,18 @@ export default async (envService: EnvService, serviceName: string): Promise<Gene
                 reconnectEnabled: true,
             },
             listenerOptions: <ListenerOptions>{
-                prefetchCount: process.env.RABBIT_QUEUE_PREFETCH_COUNT ? parseInt(process.env.RABBIT_QUEUE_PREFETCH_COUNT, 10) : 10,
+                prefetchCount: process.env.RABBIT_QUEUE_PREFETCH_COUNT ? Number.parseInt(process.env.RABBIT_QUEUE_PREFETCH_COUNT, 10) : 10,
             },
             scheduledTaskQueueName: ScheduledTaskQueueName.ScheduledTasksQueueCriminalCert,
             queueName: InternalQueueName.QueueCriminalCert,
         },
-
         [QueueConnectionType.External]: <QueueConfig>{
             connection: {
                 hostname: process.env.EXTERNAL_RABBIT_HOST,
-                port: process.env.EXTERNAL_RABBIT_PORT ? parseInt(process.env.EXTERNAL_RABBIT_PORT, 10) : undefined,
+                port: process.env.EXTERNAL_RABBIT_PORT ? Number.parseInt(process.env.EXTERNAL_RABBIT_PORT, 10) : undefined,
                 username: process.env.EXTERNAL_RABBIT_USERNAME,
                 password: process.env.EXTERNAL_RABBIT_PASSWORD,
-                heartbeat: process.env.EXTERNAL_RABBIT_HEARTBEAT ? parseInt(process.env.EXTERNAL_RABBIT_HEARTBEAT, 10) : undefined,
+                heartbeat: process.env.EXTERNAL_RABBIT_HEARTBEAT ? Number.parseInt(process.env.EXTERNAL_RABBIT_HEARTBEAT, 10) : undefined,
             },
             socketOptions: {
                 clientProperties: {
@@ -106,7 +102,7 @@ export default async (envService: EnvService, serviceName: string): Promise<Gene
             },
             listenerOptions: <ListenerOptions>{
                 prefetchCount: process.env.EXTERNAL_RABBIT_QUEUE_PREFETCH_COUNT
-                    ? parseInt(process.env.EXTERNAL_RABBIT_QUEUE_PREFETCH_COUNT, 10)
+                    ? Number.parseInt(process.env.EXTERNAL_RABBIT_QUEUE_PREFETCH_COUNT, 10)
                     : 1,
             },
             assertExchanges: process.env.EXTERNAL_RABBIT_ASSERT_EXCHANGES === 'true',
@@ -127,6 +123,14 @@ export default async (envService: EnvService, serviceName: string): Promise<Gene
         userServiceAddress: envService.getVar('GRPC_USER_SERVICE_ADDRESS'),
         cryptoServiceAddress: envService.getVar('GRPC_CRYPTO_SERVICE_ADDRESS'),
         cryptoDocServiceAddress: envService.getVar('GRPC_CRYPTO_DOC_SERVICE_ADDRESS'),
+    },
+
+    grpcServer: {
+        isEnabled: envService.getVar('GRPC_SERVER_ENABLED', 'boolean', false),
+        port: envService.getVar('GRPC_SERVER_PORT', 'number', 5000),
+        services: envService.getVar('GRPC_SERVICES', 'object'),
+        isReflectionEnabled: envService.getVar('GRPC_REFLECTION_ENABLED', 'boolean', false),
+        maxReceiveMessageLength: envService.getVar('GRPC_SERVER_MAX_RECEIVE_MESSAGE_LENGTH', 'number', 1024 * 1024 * 4),
     },
 
     sevdeir: {

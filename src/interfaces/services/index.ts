@@ -6,3 +6,10 @@ export enum ProcessCode {
     CriminalRecordCertificateMoreThenOneInProgress = 26101007,
     CriminalRecordCertificateHasBeenSentForDamagedPropertyRecovery = 26101008,
 }
+
+export enum IdentityDocumentType {
+    InternalPassport = 'internal-passport',
+    ForeignPassport = 'foreign-passport',
+    ResidencePermitPermanent = 'residence-permit-permanent',
+    ResidencePermitTemporary = 'residence-permit-temporary',
+}

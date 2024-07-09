@@ -7,10 +7,11 @@ import {
     GetRatingFormRequest,
     GetRatingFormResponse,
 } from '@diia-inhouse/analytics-service-client'
-import { EventBus, InternalEvent } from '@diia-inhouse/diia-queue'
+import { EventBus } from '@diia-inhouse/diia-queue'
 import { ActionVersion, Logger } from '@diia-inhouse/types'
 
 import { AppConfig } from '@interfaces/config'
+import { InternalEvent } from '@interfaces/queue'
 
 export default class Analytics {
     private readonly analyticsServiceClient: AnalyticsServiceClient
@@ -21,11 +22,7 @@ export default class Analytics {
         private readonly eventBus: EventBus,
         private readonly logger: Logger,
     ) {
-        this.analyticsServiceClient = grpcClientFactory.createGrpcClient(
-            AnalyticsServiceDefinition,
-            config.grpc.analyticsServiceAddress,
-            'Analytics',
-        )
+        this.analyticsServiceClient = grpcClientFactory.createGrpcClient(AnalyticsServiceDefinition, config.grpc.analyticsServiceAddress)
     }
 
     async getRatingForm(params: GetRatingFormRequest): Promise<GetRatingFormResponse> {

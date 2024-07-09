@@ -1,4 +1,4 @@
-import { ExternalCommunicator, ExternalEvent } from '@diia-inhouse/diia-queue'
+import { ExternalCommunicator } from '@diia-inhouse/diia-queue'
 import { InternalServerError, ServiceUnavailableError } from '@diia-inhouse/errors'
 import { Logger } from '@diia-inhouse/types'
 
@@ -12,6 +12,7 @@ import {
     CriminalRecordCertOrderResponse,
     CriminalRecordCertOrderResult,
 } from '@interfaces/providers/criminalRecordCertificate'
+import { ExternalEvent } from '@interfaces/queue'
 import { ProcessCode } from '@interfaces/services'
 
 export default class SevdeirCriminalRecordCertificateService implements CriminalRecordCertificateServiceProvider {

@@ -1,6 +1,7 @@
 import { TaskListener } from '@diia-inhouse/diia-queue'
-import { PublicServiceCode } from '@diia-inhouse/types'
 import { ValidationSchema } from '@diia-inhouse/validators'
+
+import { PublicServiceCode } from '@src/generated'
 
 import CriminalRecordCertificateService from '@services/criminalRecordCertificate'
 

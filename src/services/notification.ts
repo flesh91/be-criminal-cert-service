@@ -17,7 +17,6 @@ export default class NotificationService {
         this.notificationServiceClient = this.grpcClientFactory.createGrpcClient(
             NotificationServiceDefinition,
             this.config.grpc.notificationServiceAddress,
-            'Notification',
         )
     }
 

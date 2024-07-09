@@ -15,11 +15,7 @@ export default class DocumentsService {
     private readonly documentsServiceClient: DocumentsServiceClient
 
     constructor(grpcClientFactory: GrpcClientFactory, config: AppConfig) {
-        this.documentsServiceClient = grpcClientFactory.createGrpcClient(
-            DocumentsServiceDefinition,
-            config.grpc.documentsServiceAddress,
-            'Documents',
-        )
+        this.documentsServiceClient = grpcClientFactory.createGrpcClient(DocumentsServiceDefinition, config.grpc.documentsServiceAddress)
     }
 
     async getIdentityDocument(user: UserTokenData): Promise<GetIdentityDocumentResponse | undefined> {

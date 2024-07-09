@@ -1,6 +1,8 @@
-import { EventBusListener, ScheduledTaskEvent } from '@diia-inhouse/diia-queue'
+import { EventBusListener } from '@diia-inhouse/diia-queue'
 
 import CriminalRecordCertificateService from '@services/criminalRecordCertificate'
+
+import { ScheduledTaskEvent } from '@interfaces/queue'
 
 export default class CheckCriminalRecordCertificateApplicationsTask implements EventBusListener {
     constructor(private readonly criminalRecordCertificateService: CriminalRecordCertificateService) {}

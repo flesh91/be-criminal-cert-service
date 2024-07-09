@@ -1,7 +1,9 @@
 import { GrpcAppAction } from '@diia-inhouse/diia-app'
 
-import { ActionVersion, PublicServiceCode, SessionType } from '@diia-inhouse/types'
+import { ActionVersion, SessionType } from '@diia-inhouse/types'
 import { ValidationSchema } from '@diia-inhouse/validators'
+
+import { PublicServiceCode } from '@src/generated'
 
 import CriminalRecordCertificateService from '@services/criminalRecordCertificate'
 

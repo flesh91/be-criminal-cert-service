@@ -8,11 +8,7 @@ export default class AddressService {
     private readonly addressServiceClient: AddressServiceClient
 
     constructor(grpcClientFactory: GrpcClientFactory, config: AppConfig) {
-        this.addressServiceClient = grpcClientFactory.createGrpcClient(
-            AddressServiceDefinition,
-            config.grpc.addressServiceAddress,
-            'Address',
-        )
+        this.addressServiceClient = grpcClientFactory.createGrpcClient(AddressServiceDefinition, config.grpc.addressServiceAddress)
     }
 
     async getPublicServiceAddress(resourceId: string): Promise<GetPublicServiceAddressResponse> {

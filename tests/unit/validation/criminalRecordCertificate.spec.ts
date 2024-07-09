@@ -1,6 +1,4 @@
-import { PublicServiceCode } from '@diia-inhouse/types'
-
-import { CriminalRecordCertificateType } from '@src/generated/criminal-cert-service'
+import { CriminalRecordCertificateType, PublicServiceCode } from '@src/generated'
 import { getSendCriminalRecordCertificateApplicationDataValidationSchema } from '@src/validation/criminalRecordCertificate'
 
 describe('Validation', () => {

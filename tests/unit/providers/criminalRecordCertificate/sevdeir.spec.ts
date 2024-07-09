@@ -1,7 +1,7 @@
-import { randomInt, randomUUID } from 'crypto'
+import { randomInt, randomUUID } from 'node:crypto'
 
 import DiiaLogger from '@diia-inhouse/diia-logger'
-import { ExternalCommunicator, ExternalEvent } from '@diia-inhouse/diia-queue'
+import { ExternalCommunicator } from '@diia-inhouse/diia-queue'
 import { InternalServerError, ServiceUnavailableError } from '@diia-inhouse/errors'
 import TestKit, { mockInstance } from '@diia-inhouse/test'
 
@@ -13,6 +13,7 @@ import {
     CriminalRecordCertOrderStatus,
     CriminalRecordCertOrderType,
 } from '@interfaces/providers/criminalRecordCertificate'
+import { ExternalEvent } from '@interfaces/queue'
 import { ProcessCode } from '@interfaces/services'
 
 describe('SevdeirCriminalRecordCertificateService', () => {
@@ -74,8 +75,9 @@ describe('SevdeirCriminalRecordCertificateService', () => {
 
         it('should fail with error in case response received from external communicator is undefined', async () => {
             const msg = 'Failed to send criminal record certificate application'
+            const externalCommunicator = undefined
 
-            jest.spyOn(externalCommunicatorMock, 'receive').mockResolvedValueOnce(undefined)
+            jest.spyOn(externalCommunicatorMock, 'receive').mockResolvedValueOnce(externalCommunicator)
 
             await expect(async () => {
                 await sevdeirCriminalRecordCertificateService.sendApplication(payload)
@@ -109,8 +111,9 @@ describe('SevdeirCriminalRecordCertificateService', () => {
 
         it('should fail with error in case response received from external communicator is undefined', async () => {
             const msg = 'Failed to get criminal record certificate from SEVDEIR'
+            const externalCommunicator = undefined
 
-            jest.spyOn(externalCommunicatorMock, 'receive').mockResolvedValueOnce(undefined)
+            jest.spyOn(externalCommunicatorMock, 'receive').mockResolvedValueOnce(externalCommunicator)
 
             await expect(async () => {
                 await sevdeirCriminalRecordCertificateService.downloadCertificate(payload)

@@ -36,11 +36,11 @@ describe(`Action ${GetCriminalRecordCertificateApplicationReasons.name}`, () => 
             reasons: expect.any(Array),
         })
 
-        criminalRecordCertificateApplicationReasons.reasons.forEach((reason) => {
+        for (const reason of criminalRecordCertificateApplicationReasons.reasons) {
             expect(reason).toEqual<CriminalRecordCertificateApplicationReason>({
                 code: expect.any(String),
                 name: expect.any(String),
             })
-        })
+        }
     })
 })

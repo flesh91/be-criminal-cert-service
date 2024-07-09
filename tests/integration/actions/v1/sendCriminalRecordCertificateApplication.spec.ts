@@ -1,4 +1,4 @@
-import { randomInt, randomUUID } from 'crypto'
+import { randomInt, randomUUID } from 'node:crypto'
 
 import moment from 'moment'
 
@@ -6,15 +6,15 @@ import { CryptoDocServiceClient } from '@diia-inhouse/diia-crypto-client'
 import { ExternalCommunicator } from '@diia-inhouse/diia-queue'
 import { BadRequestError, InternalServerError, NotFoundError, ServiceUnavailableError, ValidationError } from '@diia-inhouse/errors'
 import TestKit from '@diia-inhouse/test'
-import { PublicServiceCode } from '@diia-inhouse/types'
 
 import {
     CriminalRecordCertificate,
     CriminalRecordCertificateStatus,
     CriminalRecordCertificateType,
+    PublicServiceCode,
     SendCriminalRecordCertificateApplicationRequest,
     SendCriminalRecordCertificateApplicationResponse,
-} from '@src/generated/criminal-cert-service'
+} from '@src/generated'
 
 import SendCriminalRecordCertificateApplication from '@actions/v1/sendCriminalRecordCertificateApplication'
 

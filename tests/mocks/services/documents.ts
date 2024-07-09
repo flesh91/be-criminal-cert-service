@@ -7,7 +7,8 @@ import {
     PassportByInnDocumentType,
 } from '@diia-inhouse/documents-service-client'
 import TestKit from '@diia-inhouse/test'
-import { IdentityDocumentType, PassportGenderEN } from '@diia-inhouse/types'
+
+import { IdentityDocumentType } from '@interfaces/services'
 
 export function getPassportWithRegistration(
     data: PartialDeep<GetInternalPassportWithRegistrationResponse> = {},
@@ -18,7 +19,7 @@ export function getPassportWithRegistration(
                 lastNameUA: 'Пашуль',
                 firstNameUA: 'Анжеліка',
                 recordNumber: '20000213-01467',
-                genderEN: PassportGenderEN.M,
+                genderEN: 'M',
                 birthday: '13.02.2000',
                 birthCountry: '',
                 birthPlaceUA: 'ДОНЕЦЬКА ОБЛ.',
@@ -52,13 +53,16 @@ export function getIdentityDocument(
     const testKit = new TestKit()
 
     switch (identityType) {
-        case IdentityDocumentType.ForeignPassport:
-            return { foreignPassport: testKit.docs.getForeignPassport(), identityType }
-        case IdentityDocumentType.InternalPassport:
-            return { internalPassport: testKit.docs.getInternalPassport(), identityType }
+        case IdentityDocumentType.ForeignPassport: {
+            return { foreignPassport: testKit.docs.generateDocument(identityType), identityType }
+        }
+        case IdentityDocumentType.InternalPassport: {
+            return { internalPassport: testKit.docs.generateDocument(identityType), identityType }
+        }
         case IdentityDocumentType.ResidencePermitPermanent:
-        case IdentityDocumentType.ResidencePermitTemporary:
+        case IdentityDocumentType.ResidencePermitTemporary: {
             throw new TypeError(`Mock not implemented`)
+        }
         default: {
             const unhandledType: never = identityType
 

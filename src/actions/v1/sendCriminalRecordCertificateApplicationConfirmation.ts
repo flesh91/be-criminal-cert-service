@@ -10,7 +10,11 @@ import CriminalRecordCertificateService from '@services/criminalRecordCertificat
 import { ActionResult, CustomActionArguments } from '@interfaces/actions/v1/sendCriminalRecordCertificateApplicationConfirmation'
 
 export default class SendCriminalRecordCertificateApplicationConfirmationAction implements GrpcAppAction {
-    constructor(private readonly criminalRecordCertificateService: CriminalRecordCertificateService) {}
+    constructor(private readonly criminalRecordCertificateService: CriminalRecordCertificateService) {
+        this.validationRules = getSendCriminalRecordCertificateApplicationDataValidationSchema([
+            ...this.criminalRecordCertificateService.reasons.keys(),
+        ])
+    }
 
     readonly sessionType: SessionType = SessionType.User
 
@@ -18,9 +22,7 @@ export default class SendCriminalRecordCertificateApplicationConfirmationAction 
 
     readonly name: string = 'sendCriminalRecordCertificateApplicationConfirmation'
 
-    readonly validationRules: ValidationSchema = getSendCriminalRecordCertificateApplicationDataValidationSchema([
-        ...this.criminalRecordCertificateService.reasons.keys(),
-    ])
+    readonly validationRules: ValidationSchema
 
     async handler(args: CustomActionArguments): Promise<ActionResult> {
         const {

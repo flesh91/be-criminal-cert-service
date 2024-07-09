@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 
 import moment from 'moment'
 
@@ -66,7 +66,7 @@ describe(`Action ${GetCriminalRecordCertificateById.name}`, () => {
         const ratingForm = <RatingForm>getRatingFormMock()
 
         jest.spyOn(analyticsService, 'getRatingForm').mockResolvedValueOnce({ ratingForm, ratingStartsAtUnixTime: 123 })
-        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettings').mockResolvedValueOnce(publicServiceSettings)
+        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettingsV2').mockResolvedValueOnce(publicServiceSettings)
 
         // Act
         const criminalRecordCertificateApplicationDetailsWithMenu: ActionResult = await getCriminalRecordCertificateById.handler({
@@ -126,7 +126,7 @@ describe(`Action ${GetCriminalRecordCertificateById.name}`, () => {
         const ratingForm = <RatingForm>getRatingFormMock()
 
         jest.spyOn(analyticsService, 'getRatingForm').mockResolvedValueOnce({ ratingForm, ratingStartsAtUnixTime: 123 })
-        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettings').mockResolvedValueOnce(publicServiceSettings)
+        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettingsV2').mockResolvedValueOnce(publicServiceSettings)
 
         // Act
         const result: ActionResult = await getCriminalRecordCertificateById.handler({
@@ -164,7 +164,7 @@ describe(`Action ${GetCriminalRecordCertificateById.name}`, () => {
         )
         const { applicationId } = createdCertificate
 
-        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettings').mockResolvedValueOnce(publicServiceSettings)
+        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettingsV2').mockResolvedValueOnce(publicServiceSettings)
         jest.spyOn(analyticsService, 'getRatingForm').mockResolvedValueOnce({ ratingStartsAtUnixTime: 123 })
 
         // Act
@@ -203,7 +203,7 @@ describe(`Action ${GetCriminalRecordCertificateById.name}`, () => {
         const ratingForm = <RatingForm>getRatingFormMock()
 
         jest.spyOn(analyticsService, 'getRatingForm').mockResolvedValueOnce({ ratingForm, ratingStartsAtUnixTime: 123 })
-        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettings').mockResolvedValueOnce(publicServiceSettings)
+        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettingsV2').mockResolvedValueOnce(publicServiceSettings)
 
         // Act
         const result: ActionResult = await getCriminalRecordCertificateById.handler({

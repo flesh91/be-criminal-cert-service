@@ -5,6 +5,8 @@ import TestKit, { mockInstance } from '@diia-inhouse/test'
 
 import NotificationService from '@services/notification'
 
+import { notificationServiceClient } from '@tests/mocks/grpc/clients'
+
 import { AppConfig } from '@interfaces/config'
 import { MessageTemplateCode } from '@interfaces/services/notification'
 
@@ -15,13 +17,10 @@ describe('NotificationService', () => {
             notificationServiceAddress: 'notification.service.address.ua',
         },
     }
-    const notificationServiceClientMock = {
-        createNotificationWithPushesByMobileUid: jest.fn(),
-    }
     const grpcClientFactoryMock = mockInstance(GrpcClientFactory)
     const loggerMock = mockInstance(DiiaLogger)
 
-    jest.spyOn(grpcClientFactoryMock, 'createGrpcClient').mockReturnValueOnce(notificationServiceClientMock)
+    jest.spyOn(grpcClientFactoryMock, 'createGrpcClient').mockReturnValueOnce(notificationServiceClient)
 
     const notificationService = new NotificationService(grpcClientFactoryMock, config, loggerMock)
 
@@ -37,11 +36,11 @@ describe('NotificationService', () => {
                 userIdentifier,
             }
 
-            notificationServiceClientMock.createNotificationWithPushesByMobileUid.mockResolvedValueOnce(true)
+            jest.spyOn(notificationServiceClient, 'createNotificationWithPushesByMobileUid').mockResolvedValueOnce({})
 
             await notificationService.createNotificationWithPushesByMobileUid(params)
 
-            expect(notificationServiceClientMock.createNotificationWithPushesByMobileUid).toHaveBeenCalledWith(params)
+            expect(notificationServiceClient.createNotificationWithPushesByMobileUid).toHaveBeenCalledWith(params)
         })
 
         it('should just log error and avoid throwing error in case create notification with pushes by mobileUid is failed', async () => {
@@ -56,11 +55,11 @@ describe('NotificationService', () => {
             }
             const expectedError = new Error('Unable to create notification with pushes')
 
-            notificationServiceClientMock.createNotificationWithPushesByMobileUid.mockRejectedValueOnce(expectedError)
+            jest.spyOn(notificationServiceClient, 'createNotificationWithPushesByMobileUid').mockRejectedValueOnce(expectedError)
 
             await notificationService.createNotificationWithPushesByMobileUid(params)
 
-            expect(notificationServiceClientMock.createNotificationWithPushesByMobileUid).toHaveBeenCalledWith(params)
+            expect(notificationServiceClient.createNotificationWithPushesByMobileUid).toHaveBeenCalledWith(params)
             expect(loggerMock.error).toHaveBeenCalledWith('Unable to create notification with pushes by mobileUid:', { err: expectedError })
         })
     })

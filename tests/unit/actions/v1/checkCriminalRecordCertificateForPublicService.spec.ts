@@ -1,7 +1,8 @@
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 
 import TestKit, { mockInstance } from '@diia-inhouse/test'
-import { PublicServiceCode } from '@diia-inhouse/types'
+
+import { PublicServiceCode } from '@src/generated'
 
 import CheckCriminalRecordCertificateForPublicServiceAction from '@actions/v1/checkCriminalRecordCertificateForPublicService'
 

@@ -1,6 +1,6 @@
-import { existsSync } from 'fs'
-import { readFile } from 'fs/promises'
-import { resolve } from 'path'
+import { existsSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
+import path from 'node:path'
 
 import { Logger, OnInit } from '@diia-inhouse/types'
 
@@ -23,7 +23,7 @@ export default class AssetsService implements OnInit {
 
     private async loadIcons(): Promise<void> {
         const tasks = Object.values(Icon).map(async (icon) => {
-            const iconPath = resolve(this.iconsPath, `${icon}.png`)
+            const iconPath = path.resolve(this.iconsPath, `${icon}.png`)
             if (!existsSync(iconPath)) {
                 const msg = `Missing icon by path: ${iconPath}`
 

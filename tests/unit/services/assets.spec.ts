@@ -1,15 +1,15 @@
-import { resolve } from 'path'
+import path from 'node:path'
 
 const existsSync = jest.fn()
 const readFile = jest.fn()
 
-jest.mock('fs', () => ({
-    ...jest.requireActual('fs'),
+jest.mock('node:fs', () => ({
+    ...jest.requireActual('node:fs'),
     existsSync,
 }))
 
-jest.mock('fs/promises', () => ({
-    ...jest.requireActual('fs/promises'),
+jest.mock('node:fs/promises', () => ({
+    ...jest.requireActual('node:fs/promises'),
     readFile,
 }))
 
@@ -34,7 +34,7 @@ describe('AssetsService', () => {
             await assetsService.onInit()
 
             for (const icon of Object.values(Icon)) {
-                const iconPath = resolve('./static/icons', `${icon}.png`)
+                const iconPath = path.resolve('./static/icons', `${icon}.png`)
 
                 expect(existsSync).toHaveBeenCalledWith(iconPath)
                 expect(readFile).toHaveBeenCalledWith(iconPath, { encoding: 'base64' })
@@ -44,7 +44,7 @@ describe('AssetsService', () => {
         it('should fail to initialize icons', async () => {
             existsSync.mockReturnValueOnce(false)
 
-            const iconPath = resolve('./static/icons', `${Icon.Download}.png`)
+            const iconPath = path.resolve('./static/icons', `${Icon.Download}.png`)
             const errorMsg = `Missing icon by path: ${iconPath}`
 
             await expect(async () => {

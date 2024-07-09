@@ -1,10 +1,10 @@
 import AdmZip from 'adm-zip'
 import moment from 'moment'
-import { FilterQuery } from 'mongoose'
 
 import { RatingCategory } from '@diia-inhouse/analytics'
+import { FilterQuery } from '@diia-inhouse/db'
 import { CryptoDocServiceClient } from '@diia-inhouse/diia-crypto-client'
-import { EventBus, InternalEvent, Task } from '@diia-inhouse/diia-queue'
+import { EventBus, Task } from '@diia-inhouse/diia-queue'
 import { ApiError, BadRequestError, ModelNotFoundError, ServiceUnavailableError, ValidationError } from '@diia-inhouse/errors'
 import { PublicServiceCatalogClient } from '@diia-inhouse/public-service-catalog-client'
 import {
@@ -13,13 +13,9 @@ import {
     AttentionMessage,
     ContactsResponse,
     DocStatus,
-    DocumentType,
     GrpcStatusCode,
-    IdentityDocumentType,
     LabeledValue,
     Logger,
-    PublicServiceCode,
-    PublicServiceKebabCaseCode,
     PublicServiceSettings,
     RatingForm,
     UserTokenData,
@@ -43,6 +39,7 @@ import {
     CriminalRecordCertificateType,
     GetCriminalRecordCertificateApplicationInfoResponse,
     GetCriminalRecordCertificateByIdResponse,
+    PublicServiceCode,
     SendCriminalRecordCertificateApplicationConfirmationResponse,
     SendCriminalRecordCertificateApplicationRequest,
     SendCriminalRecordCertificateApplicationResponse,
@@ -67,7 +64,8 @@ import {
     CriminalRecordCertDownloadRequest,
     CriminalRecordCertOrderStatus,
 } from '@interfaces/providers/criminalRecordCertificate'
-import { ProcessCode } from '@interfaces/services'
+import { InternalEvent } from '@interfaces/queue'
+import { IdentityDocumentType, ProcessCode } from '@interfaces/services'
 import {
     CheckCriminalRecordCertificateApplication,
     CriminalRecordCertificateApplicationRequestData,
@@ -90,15 +88,19 @@ export default class CriminalRecordCertificateService {
         private readonly criminalRecordCertificateProvider: CriminalRecordCertificateServiceProvider,
         private readonly analyticsService: Analytics,
         private readonly cryptoDocServiceClient: CryptoDocServiceClient,
-    ) {}
+    ) {
+        this.applicationExpirationDays = this.config.sevdeir.criminalRecordCertificate.applicationExpirationDays
+        this.checkApplicationsBatchSize = this.config.sevdeir.criminalRecordCertificate.checkBatchSize
+        this.checkApplicationsIntervalInMs = this.config.sevdeir.criminalRecordCertificate.checkIntervalMs
+    }
 
     readonly serviceCode = PublicServiceCode.criminalRecordCertificate
 
-    private readonly applicationExpirationDays: number = this.config.sevdeir.criminalRecordCertificate.applicationExpirationDays
+    private readonly applicationExpirationDays: number
 
-    private readonly checkApplicationsBatchSize: number = this.config.sevdeir.criminalRecordCertificate.checkBatchSize
+    private readonly checkApplicationsBatchSize: number
 
-    private readonly checkApplicationsIntervalInMs: number = this.config.sevdeir.criminalRecordCertificate.checkIntervalMs
+    private readonly checkApplicationsIntervalInMs: number
 
     private readonly serviceCodeToAutofillRequestMap: Partial<
         Record<PublicServiceCode, Partial<SendCriminalRecordCertificateApplicationRequest>>
@@ -133,7 +135,7 @@ export default class CriminalRecordCertificateService {
     checkSendApplicationDataParams(params: SendCriminalRecordCertificateApplicationRequest): void {
         const { publicService, reasonId, certificateType, phoneNumber } = params
 
-        const resourceIdRequiredFor: PublicServiceCode[] = [PublicServiceCode.damagedPropertyRecovery]
+        const resourceIdRequiredFor = [PublicServiceCode.damagedPropertyRecovery]
 
         if (!publicService && (!reasonId || !certificateType || !phoneNumber)) {
             throw new ValidationError([
@@ -222,8 +224,8 @@ export default class CriminalRecordCertificateService {
                     signature,
                 })
 
-                let templateCode: MessageTemplateCode | undefined = undefined
-                let resourceId: string | undefined = undefined
+                let templateCode: MessageTemplateCode | undefined
+                let resourceId: string | undefined
 
                 const isDoneStatus = status === CriminalRecordCertificateStatus.done
                 const isOutdated = moment().diff(createdAt, 'days') > this.applicationExpirationDays
@@ -347,7 +349,7 @@ export default class CriminalRecordCertificateService {
         const zip: AdmZip = new AdmZip()
 
         const date: string = moment(certificate.createdAt).format('YYYY-MM-DD')
-        const fileName: string = `vytiah pro nesudymist vid ${date}`.replace(/ /g, '_')
+        const fileName: string = `vytiah pro nesudymist vid ${date}`.replaceAll(' ', '_')
 
         zip.addFile(`${fileName}.pdf`, Buffer.from(document, 'base64'))
         zip.addFile(`${fileName}.p7s`, Buffer.from(documentSignature, 'base64'))
@@ -409,7 +411,7 @@ export default class CriminalRecordCertificateService {
                     checkbox: 'Країни немає в списку',
                     otherCountry: {
                         label: 'Країна',
-                        hint: 'Введіть назву країни самостіно',
+                        hint: 'Введіть назву країни самостійно',
                     },
                 },
                 city: {
@@ -428,7 +430,7 @@ export default class CriminalRecordCertificateService {
         publicService?: PublicServiceCode,
     ): Promise<GetCriminalRecordCertificateApplicationInfoResponse> {
         const result = { showContextMenu: true }
-        const publicServiceSettings = await this.publicServiceCatalogClient.getPublicServiceSettings({ code: this.serviceCode })
+        const publicServiceSettings = await this.publicServiceCatalogClient.getPublicServiceSettingsV2({ code: this.serviceCode })
         const attentionMessage: AttentionMessage | undefined = await this.checkServiceAvailability(publicServiceSettings, user, headers)
 
         const title = utils.getGreeting(user.fName)
@@ -563,7 +565,7 @@ export default class CriminalRecordCertificateService {
         }
 
         const [publicServiceSettings, ratingForm] = await Promise.all([
-            this.publicServiceCatalogClient.getPublicServiceSettings({ code: this.serviceCode }),
+            this.publicServiceCatalogClient.getPublicServiceSettingsV2({ code: this.serviceCode }),
             this.getRatingForm(certificate),
         ])
         const contextMenu = PublicServiceUtils.extractContextMenu(publicServiceSettings, headers) || []
@@ -604,7 +606,7 @@ export default class CriminalRecordCertificateService {
 
         const [total, publicServiceSettings] = await Promise.all([
             criminalRecordCertificateModel.countDocuments(query),
-            this.publicServiceCatalogClient.getPublicServiceSettings({ code: this.serviceCode }),
+            this.publicServiceCatalogClient.getPublicServiceSettingsV2({ code: this.serviceCode }),
         ])
 
         const navigationPanel = PublicServiceUtils.extractNavigationPanel(publicServiceSettings, headers)
@@ -674,7 +676,7 @@ export default class CriminalRecordCertificateService {
             }
         }
 
-        if (applications.length) {
+        if (applications.length > 0) {
             await this.task.publish(
                 ServiceTask.CheckCriminalRecordCertificateApplications,
                 { applications },
@@ -704,7 +706,7 @@ export default class CriminalRecordCertificateService {
         }
 
         const requestData = await this.getRequestData(user, applicationData)
-        const { reasonId, certificateType } = requestData
+        const { reasonId, certificateType, nationalitiesAlfa3 } = requestData
         const providerRequest = this.criminalRecordCertificateDataMapper.toProviderRequest(requestData)
         const signature = await this.generateSignature()
         const { id: sentApplicationId, status: providerStatus } = await this.criminalRecordCertificateProvider.sendApplication({
@@ -742,7 +744,7 @@ export default class CriminalRecordCertificateService {
             applicant: {
                 applicantIdentifier: userIdentifier,
                 applicantMobileUid: mobileUid!,
-                nationality: requestData.nationalitiesAlfa3 || [],
+                nationality: nationalitiesAlfa3 || [],
             },
             publicService,
             status,
@@ -832,11 +834,12 @@ export default class CriminalRecordCertificateService {
             return unsuitableAgeAttentionMessage
         }
 
+        const taxpayerCardDocumentType = 'taxpayer-card'
         const { documents } = await this.userService.getUserDocuments(userIdentifier, [
-            { documentType: DocumentType.TaxpayerCard, docStatus: [DocStatus.Ok, DocStatus.Confirming] },
+            { documentType: taxpayerCardDocumentType, docStatus: [DocStatus.Ok, DocStatus.Confirming] },
         ])
 
-        const taxpayerCard = documents.find(({ documentType }) => documentType === DocumentType.TaxpayerCard)
+        const taxpayerCard = documents.find(({ documentType }) => documentType === taxpayerCardDocumentType)
         if (taxpayerCard?.docStatus === DocStatus.Confirming) {
             return confirmingTaxpayerCardAttentionMessage
         }
@@ -882,7 +885,7 @@ export default class CriminalRecordCertificateService {
             userIdentifier,
             statusDate,
             category: RatingCategory.PublicService,
-            serviceCode: PublicServiceKebabCaseCode.CriminalRecordCertificate,
+            serviceCode: 'criminal-cert',
             resourceId,
         })
 
@@ -964,9 +967,9 @@ export default class CriminalRecordCertificateService {
                         registrationCity = `${settlementType || ''} ${settlementName || ''}`.trim()
                     }
                 }
-            } catch (e) {
-                utils.handleError(e, (err) => {
-                    if (err.getCode() === GrpcStatusCode.NOT_FOUND) {
+            } catch (err) {
+                utils.handleError(err, (handledError) => {
+                    if (handledError.getCode() === GrpcStatusCode.NOT_FOUND) {
                         return
                     }
 
@@ -987,13 +990,14 @@ export default class CriminalRecordCertificateService {
 
                 switch (identityDocument.identityType) {
                     case IdentityDocumentType.InternalPassport:
-                    case IdentityDocumentType.ForeignPassport:
+                    case IdentityDocumentType.ForeignPassport: {
                         if (!nationalities?.length) {
                             nationalities = ['Україна']
                             nationalitiesAlfa3 = ['UKR']
                         }
 
                         break
+                    }
                     case IdentityDocumentType.ResidencePermitPermanent:
                     case IdentityDocumentType.ResidencePermitTemporary: {
                         const { residencePermit } = identityDocument
@@ -1020,9 +1024,9 @@ export default class CriminalRecordCertificateService {
                         break
                     }
                 }
-            } catch (e) {
-                utils.handleError(e, (err) => {
-                    if (err.getCode() === GrpcStatusCode.NOT_FOUND) {
+            } catch (err) {
+                utils.handleError(err, (handledError) => {
+                    if (handledError.getCode() === GrpcStatusCode.NOT_FOUND) {
                         return
                     }
 
@@ -1063,9 +1067,9 @@ export default class CriminalRecordCertificateService {
     ): CriminalRecordCertificateApplicationScreen {
         const { birthCountry, birthCity, registrationCountry, registrationCity, nationalities } = requestData
 
-        const hasBirthPlace = !!birthCountry && !!birthCity
-        const hasNationality = !!nationalities?.length
-        const hasRegistrationPlace = !!registrationCountry && !!registrationCity
+        const hasBirthPlace = Boolean(birthCountry) && Boolean(birthCity)
+        const hasNationality = Boolean(nationalities?.length)
+        const hasRegistrationPlace = Boolean(registrationCountry) && Boolean(registrationCity)
 
         if (!hasBirthPlace && [CriminalRecordCertificateApplicationScreen.requester].includes(currentScreen)) {
             return CriminalRecordCertificateApplicationScreen.birthPlace
@@ -1098,7 +1102,7 @@ export default class CriminalRecordCertificateService {
         await this.analyticsService.notifyRate({
             userIdentifier,
             category: RatingCategory.PublicService,
-            serviceCode: PublicServiceKebabCaseCode.CriminalRecordCertificate,
+            serviceCode: 'criminal-cert',
             resourceId,
         })
     }

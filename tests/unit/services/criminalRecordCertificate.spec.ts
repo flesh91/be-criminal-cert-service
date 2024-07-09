@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 
 const admZipStubs = {
     addFile: jest.fn(),
@@ -44,24 +44,20 @@ jest.mock('@diia-inhouse/utils', () => ({
 }))
 
 import moment from 'moment'
-import { Query, UpdateWriteOpResult } from 'mongoose'
 
 import { RatingCategory } from '@diia-inhouse/analytics'
+import { Query, UpdateWriteOpResult } from '@diia-inhouse/db'
 import DiiaLogger from '@diia-inhouse/diia-logger'
-import { EventBus, InternalEvent, Task } from '@diia-inhouse/diia-queue'
-import { GetInternalPassportWithRegistrationResponse, PassportByInnDocumentType } from '@diia-inhouse/documents-service-client'
+import { EventBus, Task } from '@diia-inhouse/diia-queue'
+import {
+    GetInternalPassportWithRegistrationResponse,
+    InternalPassport,
+    PassportByInnDocumentType,
+    ResidencePermit,
+} from '@diia-inhouse/documents-service-client'
 import { BadRequestError, ModelNotFoundError, NotFoundError, ServiceUnavailableError, ValidationError } from '@diia-inhouse/errors'
 import TestKit, { mockInstance } from '@diia-inhouse/test'
-import {
-    DocStatus,
-    DocumentType,
-    DurationMs,
-    IdentityDocumentType,
-    PublicServiceCode,
-    PublicServiceKebabCaseCode,
-    PublicServiceStatus,
-    SessionType,
-} from '@diia-inhouse/types'
+import { DocStatus, DurationMs, PublicServiceStatus, SessionType } from '@diia-inhouse/types'
 import { UserDocument } from '@diia-inhouse/user-service-client'
 
 import {
@@ -69,7 +65,8 @@ import {
     CriminalRecordCertificateApplicationScreen,
     CriminalRecordCertificateStatus,
     CriminalRecordCertificateType,
-} from '@src/generated/criminal-cert-service'
+    PublicServiceCode,
+} from '@src/generated'
 import CriminalRecordCertificateProvider from '@src/providers/criminalRecordCertificate/sevdeir'
 
 import AddressService from '@services/address'
@@ -92,7 +89,8 @@ import {
     CriminalRecordCertOrderStatus,
     CriminalRecordCertOrderType,
 } from '@interfaces/providers/criminalRecordCertificate'
-import { ProcessCode } from '@interfaces/services'
+import { InternalEvent } from '@interfaces/queue'
+import { IdentityDocumentType, ProcessCode } from '@interfaces/services'
 import { MessageTemplateCode } from '@interfaces/services/notification'
 import { ServiceTask } from '@interfaces/tasks'
 
@@ -192,7 +190,7 @@ describe('CriminalRecordCertificateService', () => {
         issueDate,
         expirationDate,
         department,
-    } = testKit.docs.getInternalPassport()
+    } = <InternalPassport>testKit.docs.generateDocument(IdentityDocumentType.InternalPassport)
     const internalPassportWithRegistration = <GetInternalPassportWithRegistrationResponse>{
         registration: {
             address: {
@@ -387,7 +385,7 @@ describe('CriminalRecordCertificateService', () => {
                     jest.spyOn(criminalRecordCertificateModel, 'findOne').mockResolvedValueOnce(
                         new criminalRecordCertificateModel({
                             ...validCertificate,
-                            receivingApplicationTime: new Date(new Date().getTime() - DurationMs.Day * 31),
+                            receivingApplicationTime: new Date(Date.now() - DurationMs.Day * 31),
                         }),
                     )
                 },
@@ -460,9 +458,7 @@ describe('CriminalRecordCertificateService', () => {
                 userIdentifier,
                 mobileUid,
                 notifications: {},
-                createdAt: new Date(
-                    new Date().getTime() - DurationMs.Day * (config.sevdeir.criminalRecordCertificate.applicationExpirationDays + 2),
-                ),
+                createdAt: new Date(Date.now() - DurationMs.Day * (config.sevdeir.criminalRecordCertificate.applicationExpirationDays + 2)),
                 publicService: {
                     code: PublicServiceCode.damagedPropertyRecovery,
                     resourceId: randomUUID(),
@@ -511,7 +507,7 @@ describe('CriminalRecordCertificateService', () => {
             expect(analyticsServiceMock.notifyRate).toHaveBeenCalledWith({
                 userIdentifier,
                 category: RatingCategory.PublicService,
-                serviceCode: PublicServiceKebabCaseCode.CriminalRecordCertificate,
+                serviceCode: 'criminal-cert',
                 resourceId: applications[0].applicationId,
             })
             expect(notificationServiceMock.createNotificationWithPushesByMobileUid).toHaveBeenLastCalledWith({
@@ -658,7 +654,7 @@ describe('CriminalRecordCertificateService', () => {
             createdAt: new Date(),
         }
         const validCertificateModel = new criminalRecordCertificateModel(validCertificate)
-        const expectedFileName = `vytiah pro nesudymist vid ${moment(validCertificate.createdAt).format('YYYY-MM-DD')}`.replace(/ /g, '_')
+        const expectedFileName = `vytiah pro nesudymist vid ${moment(validCertificate.createdAt).format('YYYY-MM-DD')}`.replaceAll(' ', '_')
         const { identifier: userIdentifier } = user
 
         it('should successfully download certificate files', async () => {
@@ -832,7 +828,7 @@ describe('CriminalRecordCertificateService', () => {
                         checkbox: 'Країни немає в списку',
                         otherCountry: {
                             label: 'Країна',
-                            hint: 'Введіть назву країни самостіно',
+                            hint: 'Введіть назву країни самостійно',
                         },
                     },
                     city: {
@@ -866,7 +862,7 @@ describe('CriminalRecordCertificateService', () => {
                         checkbox: 'Країни немає в списку',
                         otherCountry: {
                             label: 'Країна',
-                            hint: 'Введіть назву країни самостіно',
+                            hint: 'Введіть назву країни самостійно',
                         },
                     },
                     city: {
@@ -903,7 +899,7 @@ describe('CriminalRecordCertificateService', () => {
     describe('method `getApplicationInfo`', () => {
         const { birthDay, identifier: userIdentifier, fName } = user
         const headers = testKit.session.getHeaders()
-        const taxpayerCard = testKit.docs.getTaxpayerCard({ docStatus: DocStatus.Ok })
+        const taxpayerCard = testKit.docs.generateDocument('taxpayer-card', { docStatus: DocStatus.Ok })
 
         it.each([
             [
@@ -913,7 +909,7 @@ describe('CriminalRecordCertificateService', () => {
                     utilsStubs.isAvailable.mockReturnValueOnce(true)
                     utilsStubs.getAge.mockReturnValueOnce(15)
                     jest.spyOn(userServiceMock, 'getUserDocuments').mockResolvedValueOnce({
-                        documents: [<UserDocument>(<unknown>{ ...taxpayerCard, documentType: DocumentType.TaxpayerCard })],
+                        documents: [<UserDocument>(<unknown>{ ...taxpayerCard, documentType: 'taxpayer-card' })],
                     })
                     jest.spyOn(criminalRecordCertificateModel, 'countDocuments').mockResolvedValueOnce(0)
                 },
@@ -921,7 +917,7 @@ describe('CriminalRecordCertificateService', () => {
                     expect(utilsStubs.isAvailable).toHaveBeenCalledWith(publicServiceSettings, user, headers)
                     expect(utilsStubs.getAge).toHaveBeenCalledWith(birthDay)
                     expect(userServiceMock.getUserDocuments).toHaveBeenCalledWith(userIdentifier, [
-                        { documentType: DocumentType.TaxpayerCard, docStatus: [DocStatus.Ok, DocStatus.Confirming] },
+                        { documentType: 'taxpayer-card', docStatus: [DocStatus.Ok, DocStatus.Confirming] },
                     ])
                     expect(criminalRecordCertificateModel.countDocuments).toHaveBeenCalledWith({
                         userIdentifier,
@@ -942,7 +938,7 @@ describe('CriminalRecordCertificateService', () => {
                     utilsStubs.isAvailable.mockReturnValueOnce(true)
                     utilsStubs.getAge.mockReturnValueOnce(15)
                     jest.spyOn(userServiceMock, 'getUserDocuments').mockResolvedValueOnce({
-                        documents: [<UserDocument>(<unknown>{ ...taxpayerCard, documentType: DocumentType.TaxpayerCard })],
+                        documents: [<UserDocument>(<unknown>{ ...taxpayerCard, documentType: 'taxpayer-card' })],
                     })
                     jest.spyOn(criminalRecordCertificateModel, 'countDocuments').mockResolvedValueOnce(0)
                 },
@@ -950,7 +946,7 @@ describe('CriminalRecordCertificateService', () => {
                     expect(utilsStubs.isAvailable).toHaveBeenCalledWith(publicServiceSettings, user, headers)
                     expect(utilsStubs.getAge).toHaveBeenCalledWith(birthDay)
                     expect(userServiceMock.getUserDocuments).toHaveBeenCalledWith(userIdentifier, [
-                        { documentType: DocumentType.TaxpayerCard, docStatus: [DocStatus.Ok, DocStatus.Confirming] },
+                        { documentType: 'taxpayer-card', docStatus: [DocStatus.Ok, DocStatus.Confirming] },
                     ])
                     expect(criminalRecordCertificateModel.countDocuments).toHaveBeenCalledWith({
                         userIdentifier,
@@ -971,7 +967,7 @@ describe('CriminalRecordCertificateService', () => {
                     utilsStubs.isAvailable.mockReturnValueOnce(true)
                     utilsStubs.getAge.mockReturnValueOnce(15)
                     jest.spyOn(userServiceMock, 'getUserDocuments').mockResolvedValueOnce({
-                        documents: [<UserDocument>(<unknown>{ ...taxpayerCard, documentType: DocumentType.TaxpayerCard })],
+                        documents: [<UserDocument>(<unknown>{ ...taxpayerCard, documentType: 'taxpayer-card' })],
                     })
                     jest.spyOn(criminalRecordCertificateModel, 'countDocuments').mockResolvedValueOnce(0)
                 },
@@ -979,7 +975,7 @@ describe('CriminalRecordCertificateService', () => {
                     expect(utilsStubs.isAvailable).toHaveBeenCalledWith(publicServiceSettings, user, headers)
                     expect(utilsStubs.getAge).toHaveBeenCalledWith(birthDay)
                     expect(userServiceMock.getUserDocuments).toHaveBeenCalledWith(userIdentifier, [
-                        { documentType: DocumentType.TaxpayerCard, docStatus: [DocStatus.Ok, DocStatus.Confirming] },
+                        { documentType: 'taxpayer-card', docStatus: [DocStatus.Ok, DocStatus.Confirming] },
                     ])
                     expect(criminalRecordCertificateModel.countDocuments).toHaveBeenCalledWith({
                         userIdentifier,
@@ -1031,8 +1027,8 @@ describe('CriminalRecordCertificateService', () => {
                     utilsStubs.getAge.mockReturnValueOnce(15)
                     jest.spyOn(userServiceMock, 'getUserDocuments').mockResolvedValueOnce({
                         documents: [<UserDocument>(<unknown>{
-                                ...testKit.docs.getTaxpayerCard({ docStatus: DocStatus.Confirming }),
-                                documentType: DocumentType.TaxpayerCard,
+                                ...testKit.docs.generateDocument('taxpayer-card', { docStatus: DocStatus.Confirming }),
+                                documentType: 'taxpayer-card',
                             })],
                     })
                 },
@@ -1040,7 +1036,7 @@ describe('CriminalRecordCertificateService', () => {
                     expect(utilsStubs.isAvailable).toHaveBeenCalledWith(publicServiceSettings, user, headers)
                     expect(utilsStubs.getAge).toHaveBeenCalledWith(birthDay)
                     expect(userServiceMock.getUserDocuments).toHaveBeenCalledWith(userIdentifier, [
-                        { documentType: DocumentType.TaxpayerCard, docStatus: [DocStatus.Ok, DocStatus.Confirming] },
+                        { documentType: 'taxpayer-card', docStatus: [DocStatus.Ok, DocStatus.Confirming] },
                     ])
                 },
                 {
@@ -1062,7 +1058,7 @@ describe('CriminalRecordCertificateService', () => {
                     expect(utilsStubs.isAvailable).toHaveBeenCalledWith(publicServiceSettings, user, headers)
                     expect(utilsStubs.getAge).toHaveBeenCalledWith(birthDay)
                     expect(userServiceMock.getUserDocuments).toHaveBeenCalledWith(userIdentifier, [
-                        { documentType: DocumentType.TaxpayerCard, docStatus: [DocStatus.Ok, DocStatus.Confirming] },
+                        { documentType: 'taxpayer-card', docStatus: [DocStatus.Ok, DocStatus.Confirming] },
                     ])
                 },
                 {
@@ -1077,7 +1073,7 @@ describe('CriminalRecordCertificateService', () => {
                     utilsStubs.isAvailable.mockReturnValueOnce(true)
                     utilsStubs.getAge.mockReturnValueOnce(15)
                     jest.spyOn(userServiceMock, 'getUserDocuments').mockResolvedValueOnce({
-                        documents: [<UserDocument>(<unknown>{ ...taxpayerCard, documentType: DocumentType.TaxpayerCard })],
+                        documents: [<UserDocument>(<unknown>{ ...taxpayerCard, documentType: 'taxpayer-card' })],
                     })
                     jest.spyOn(criminalRecordCertificateModel, 'countDocuments').mockResolvedValueOnce(1)
                 },
@@ -1085,7 +1081,7 @@ describe('CriminalRecordCertificateService', () => {
                     expect(utilsStubs.isAvailable).toHaveBeenCalledWith(publicServiceSettings, user, headers)
                     expect(utilsStubs.getAge).toHaveBeenCalledWith(birthDay)
                     expect(userServiceMock.getUserDocuments).toHaveBeenCalledWith(userIdentifier, [
-                        { documentType: DocumentType.TaxpayerCard, docStatus: [DocStatus.Ok, DocStatus.Confirming] },
+                        { documentType: 'taxpayer-card', docStatus: [DocStatus.Ok, DocStatus.Confirming] },
                     ])
                     expect(criminalRecordCertificateModel.countDocuments).toHaveBeenCalledWith({
                         userIdentifier,
@@ -1101,7 +1097,7 @@ describe('CriminalRecordCertificateService', () => {
             'should successfully get application info when %s',
             async (_msg, publicService, defineSpies, checkExpectations, expectedResult) => {
                 defineSpies()
-                jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettings').mockResolvedValueOnce(publicServiceSettings)
+                jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettingsV2').mockResolvedValueOnce(publicServiceSettings)
                 utilsStubs.getGreeting.mockReturnValueOnce(`Вітаємо, ${fName}`)
 
                 const result = await criminalRecordCertificateService.getApplicationInfo(user, headers, publicService)
@@ -1110,7 +1106,7 @@ describe('CriminalRecordCertificateService', () => {
 
                 checkExpectations()
 
-                expect(publicServiceCatalogClient.getPublicServiceSettings).toHaveBeenCalledWith({
+                expect(publicServiceCatalogClient.getPublicServiceSettingsV2).toHaveBeenCalledWith({
                     code: PublicServiceCode.criminalRecordCertificate,
                 })
                 expect(utilsStubs.getGreeting).toHaveBeenCalledWith(fName)
@@ -1314,7 +1310,7 @@ describe('CriminalRecordCertificateService', () => {
             statusHistory: [{ status: CriminalRecordCertificateStatus.done, date: new Date() }],
         }
         const ratingFormResponse = {
-            ratingStartsAtUnixTime: new Date().getTime(),
+            ratingStartsAtUnixTime: Date.now(),
             ratingForm: {
                 comment: {
                     hint: 'hint',
@@ -1379,10 +1375,12 @@ describe('CriminalRecordCertificateService', () => {
                 },
             ],
         ])('should successfully get criminal record certificate by id when %s', async (_msg, validCertificateModel, expectedResult) => {
+            const contextMenu = undefined
+
             jest.spyOn(criminalRecordCertificateModel, 'findOne').mockResolvedValueOnce(validCertificateModel)
-            jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettings').mockResolvedValueOnce(publicServiceSettings)
+            jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettingsV2').mockResolvedValueOnce(publicServiceSettings)
             jest.spyOn(analyticsServiceMock, 'getRatingForm').mockResolvedValueOnce(ratingFormResponse)
-            utilsStubs.extractContextMenu.mockReturnValueOnce(undefined)
+            utilsStubs.extractContextMenu.mockReturnValueOnce(contextMenu)
             utilsStubs.extractNavigationPanel.mockReturnValueOnce({
                 contextMenu: [],
             })
@@ -1397,14 +1395,14 @@ describe('CriminalRecordCertificateService', () => {
                 applicationId,
                 status: { $in: [CriminalRecordCertificateStatus.applicationProcessing, CriminalRecordCertificateStatus.done] },
             })
-            expect(publicServiceCatalogClient.getPublicServiceSettings).toHaveBeenCalledWith({
+            expect(publicServiceCatalogClient.getPublicServiceSettingsV2).toHaveBeenCalledWith({
                 code: PublicServiceCode.criminalRecordCertificate,
             })
             expect(analyticsServiceMock.getRatingForm).toHaveBeenCalledWith({
                 userIdentifier,
                 statusDate: validCertificate.statusHistory[0].date,
                 category: RatingCategory.PublicService,
-                serviceCode: PublicServiceKebabCaseCode.CriminalRecordCertificate,
+                serviceCode: 'criminal-cert',
                 resourceId: validCertificate.applicationId,
             })
             expect(utilsStubs.extractContextMenu).toHaveBeenCalledWith(publicServiceSettings, headers)
@@ -1474,7 +1472,7 @@ describe('CriminalRecordCertificateService', () => {
             jest.spyOn(criminalRecordCertificateModel, 'find').mockResolvedValueOnce(certificatesToCheck)
             jest.spyOn(criminalRecordCertificateService, 'checkApplicationsStatuses').mockResolvedValueOnce()
             jest.spyOn(criminalRecordCertificateModel, 'countDocuments').mockResolvedValueOnce(1)
-            jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettings').mockResolvedValueOnce(publicServiceSettings)
+            jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettingsV2').mockResolvedValueOnce(publicServiceSettings)
             utilsStubs.extractNavigationPanel.mockReturnValueOnce(navigationPanel)
             limitSpy.mockResolvedValueOnce([validDoneCertificateModel])
             skipSpy.mockReturnValueOnce({ limit: limitSpy })
@@ -1498,7 +1496,7 @@ describe('CriminalRecordCertificateService', () => {
             })
             expect(criminalRecordCertificateService.checkApplicationsStatuses).toHaveBeenCalledWith(certificatesToCheck, [])
             expect(criminalRecordCertificateModel.countDocuments).toHaveBeenCalledWith({ userIdentifier, status })
-            expect(publicServiceCatalogClient.getPublicServiceSettings).toHaveBeenCalledWith({
+            expect(publicServiceCatalogClient.getPublicServiceSettingsV2).toHaveBeenCalledWith({
                 code: PublicServiceCode.criminalRecordCertificate,
             })
             expect(utilsStubs.extractNavigationPanel).toHaveBeenCalledWith(publicServiceSettings, headers)
@@ -1514,7 +1512,7 @@ describe('CriminalRecordCertificateService', () => {
             jest.spyOn(criminalRecordCertificateModel, 'find').mockResolvedValueOnce(certificatesToCheck)
             jest.spyOn(criminalRecordCertificateService, 'checkApplicationsStatuses').mockResolvedValueOnce()
             jest.spyOn(criminalRecordCertificateModel, 'countDocuments').mockResolvedValueOnce(0)
-            jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettings').mockResolvedValueOnce(publicServiceSettings)
+            jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettingsV2').mockResolvedValueOnce(publicServiceSettings)
             utilsStubs.extractNavigationPanel.mockReturnValueOnce(navigationPanel)
 
             expect(await criminalRecordCertificateService.getCriminalRecordCertificatesByStatus(user, headers, status, 10)).toEqual({
@@ -1536,7 +1534,7 @@ describe('CriminalRecordCertificateService', () => {
             })
             expect(criminalRecordCertificateService.checkApplicationsStatuses).toHaveBeenCalledWith(certificatesToCheck, [])
             expect(criminalRecordCertificateModel.countDocuments).toHaveBeenCalledWith({ userIdentifier, status })
-            expect(publicServiceCatalogClient.getPublicServiceSettings).toHaveBeenCalledWith({
+            expect(publicServiceCatalogClient.getPublicServiceSettingsV2).toHaveBeenCalledWith({
                 code: PublicServiceCode.criminalRecordCertificate,
             })
             expect(utilsStubs.extractNavigationPanel).toHaveBeenCalledWith(publicServiceSettings, headers)
@@ -1679,7 +1677,7 @@ describe('CriminalRecordCertificateService', () => {
                 { ...registrationAddress },
                 { ...requestData },
                 {
-                    internalPassport: testKit.docs.getInternalPassport(),
+                    internalPassport: <InternalPassport>testKit.docs.generateDocument(IdentityDocumentType.InternalPassport),
                     identityType: IdentityDocumentType.InternalPassport,
                 },
                 {
@@ -1720,7 +1718,7 @@ describe('CriminalRecordCertificateService', () => {
                     registrationCountry: 'Україна',
                 },
                 {
-                    residencePermit: testKit.docs.getResidencePermit(),
+                    residencePermit: <ResidencePermit>testKit.docs.generateDocument('residence-permit'),
                     identityType: IdentityDocumentType.ResidencePermitPermanent,
                 },
                 {
@@ -1741,7 +1739,7 @@ describe('CriminalRecordCertificateService', () => {
                     ...requestData,
                 },
                 {
-                    internalPassport: testKit.docs.getInternalPassport(),
+                    internalPassport: <InternalPassport>testKit.docs.generateDocument(IdentityDocumentType.InternalPassport),
                     identityType: IdentityDocumentType.InternalPassport,
                 },
                 {
@@ -1759,7 +1757,7 @@ describe('CriminalRecordCertificateService', () => {
                     ...requestData,
                 },
                 {
-                    internalPassport: testKit.docs.getInternalPassport(),
+                    internalPassport: <InternalPassport>testKit.docs.generateDocument(IdentityDocumentType.InternalPassport),
                     identityType: IdentityDocumentType.InternalPassport,
                 },
                 {
@@ -1835,7 +1833,7 @@ describe('CriminalRecordCertificateService', () => {
                 expect(analyticsServiceMock.notifyRate).toHaveBeenCalledWith({
                     userIdentifier,
                     category: RatingCategory.PublicService,
-                    serviceCode: PublicServiceKebabCaseCode.CriminalRecordCertificate,
+                    serviceCode: 'criminal-cert',
                     resourceId: applicationId,
                 })
             },
@@ -1849,7 +1847,7 @@ describe('CriminalRecordCertificateService', () => {
             )
             jest.spyOn(documentsServiceMock, 'getIdentityDocument').mockResolvedValueOnce({
                 identityType: IdentityDocumentType.InternalPassport,
-                internalPassport: testKit.docs.getInternalPassport(),
+                internalPassport: <InternalPassport>testKit.docs.generateDocument(IdentityDocumentType.InternalPassport),
             })
             jest.spyOn(criminalRecordCertificateMapperMock, 'toProviderRequest').mockReturnValueOnce(providerRequest)
             jest.spyOn(cryptoDocServiceClient, 'docGenerateSignature').mockResolvedValueOnce({ signature })

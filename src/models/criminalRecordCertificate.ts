@@ -1,6 +1,4 @@
-import { Model, Schema, model, models } from 'mongoose'
-
-import { PublicServiceCode } from '@diia-inhouse/types'
+import { Model, Schema, model, models } from '@diia-inhouse/db'
 
 import {
     CriminalRecordCertificate,
@@ -10,6 +8,7 @@ import {
     CriminalRecordCertificateReason,
     CriminalRecordCertificateStatus,
     CriminalRecordCertificateType,
+    PublicServiceCode,
 } from '@src/generated'
 
 import { StatusHistoryItem } from '@interfaces/models/statusHistoryItem'

@@ -6,8 +6,7 @@ import "google/protobuf/timestamp.proto";
 
 import "analytics.proto";
 import "contextMenu.proto";
-import "publicServiceCode.proto";
-import "publicServices.proto";
+import "publicService.proto";
 import "ui.proto";
 
 package ua.gov.diia.criminal_cert;
@@ -84,13 +83,21 @@ service CriminalCertService {
     };
 }
 
+enum PublicServiceCode {
+    reserved 1 to 16, 18 to 29, 31 to 66;
+
+    administrativeFees = 0;
+    criminalRecordCertificate = 17;
+    damagedPropertyRecovery = 30;
+}
+
 message CheckCriminalRecordCertificateForPublicServiceRequest {
     string userIdentifier = 1;
     CriminalRecordCertificatePublicService publicService = 2; // required
 }
 
 message CriminalRecordCertificatePublicService {
-    ua.gov.diia.types.PublicServiceCode code = 1;
+    PublicServiceCode code = 1;
     optional string resourceId = 2;
 }
 
@@ -391,7 +398,7 @@ message CriminalRecordCertificateApplicationConfirmationReason {
 }
 
 message GetCriminalRecordCertificateApplicationInfoRequest {
-    optional ua.gov.diia.types.PublicServiceCode publicService = 1;
+    optional PublicServiceCode publicService = 1;
 }
 
 message GetCriminalRecordCertificateApplicationInfoResponse {

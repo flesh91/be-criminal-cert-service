@@ -9,7 +9,7 @@ export default class UserService {
     private readonly userServiceClient: UserServiceClient
 
     constructor(grpcClientFactory: GrpcClientFactory, config: AppConfig) {
-        this.userServiceClient = grpcClientFactory.createGrpcClient(UserServiceDefinition, config.grpc.userServiceAddress, 'User')
+        this.userServiceClient = grpcClientFactory.createGrpcClient(UserServiceDefinition, config.grpc.userServiceAddress)
     }
 
     async getUserDocuments(userIdentifier: string, filters: DocumentFilter[]): Promise<GetUserDocumentsResponse> {

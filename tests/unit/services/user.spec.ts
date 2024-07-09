@@ -12,6 +12,8 @@ import { ActionVersion } from '@diia-inhouse/types'
 
 import UserService from '@services/user'
 
+import { userServiceClient } from '@tests/mocks/grpc/clients'
+
 import { AppConfig } from '@interfaces/config'
 
 describe('UserService', () => {
@@ -24,12 +26,9 @@ describe('UserService', () => {
             userServiceAddress: 'user.service.address.ua',
         },
     }
-    const userServiceClientMock = {
-        getUserDocuments: jest.fn(),
-    }
     const grpcClientFactoryMock = mockInstance(GrpcClientFactory)
 
-    jest.spyOn(grpcClientFactoryMock, 'createGrpcClient').mockReturnValueOnce(userServiceClientMock)
+    jest.spyOn(grpcClientFactoryMock, 'createGrpcClient').mockReturnValueOnce(userServiceClient)
 
     const userService = new UserService(grpcClientFactoryMock, config)
 
@@ -43,12 +42,12 @@ describe('UserService', () => {
             }
 
             clientCallOptions.mockReturnValueOnce({})
-            userServiceClientMock.getUserDocuments.mockReturnValueOnce(userDocuments)
+            jest.spyOn(userServiceClient, 'getUserDocuments').mockResolvedValueOnce(userDocuments)
 
             expect(await userService.getUserDocuments(userIdentifier, [])).toEqual(userDocuments)
 
             expect(clientCallOptions).toHaveBeenCalledWith({ version: ActionVersion.V2 })
-            expect(userServiceClientMock.getUserDocuments).toHaveBeenCalledWith({ userIdentifier, filters: [] }, {})
+            expect(userServiceClient.getUserDocuments).toHaveBeenCalledWith({ userIdentifier, filters: [] }, {})
         })
     })
 })

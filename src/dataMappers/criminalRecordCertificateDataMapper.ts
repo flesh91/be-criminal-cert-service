@@ -246,13 +246,11 @@ export default class CriminalRecordCertificateMapper {
                 },
                 birthPlace: {
                     label: 'Місце народження:',
-                    value: [birthCountry, birthCity].filter((item) => !!item).join(', '),
+                    value: [birthCountry, birthCity].filter(Boolean).join(', '),
                 },
                 registrationAddress: {
                     label: 'Місце реєстрації проживання:',
-                    value: [registrationCountry, registrationRegion, registrationDistrict, registrationCity]
-                        .filter((item) => !!item)
-                        .join(', '),
+                    value: [registrationCountry, registrationRegion, registrationDistrict, registrationCity].filter(Boolean).join(', '),
                 },
             },
             contacts: {
@@ -305,12 +303,12 @@ export default class CriminalRecordCertificateMapper {
             itn: clientId,
         } = requestData
 
-        const firstNameChanged = !!previousFirstName
-        const lastNameChanged = !!previousLastName
-        const middleNameChanged = !!previousMiddleName
-        const firstNameBefore = firstNameChanged ? previousFirstName.replaceAll(/\s*,\s*/g, ', ') : undefined
-        const lastNameBefore = lastNameChanged ? previousLastName.replaceAll(/\s*,\s*/g, ', ') : undefined
-        const middleNameBefore = middleNameChanged ? previousMiddleName.replaceAll(/\s*,\s*/g, ', ') : undefined
+        const firstNameChanged = Boolean(previousFirstName)
+        const lastNameChanged = Boolean(previousLastName)
+        const middleNameChanged = Boolean(previousMiddleName)
+        const firstNameBefore = firstNameChanged && previousFirstName ? previousFirstName.replaceAll(/\s*,\s*/g, ', ') : undefined
+        const lastNameBefore = lastNameChanged && previousLastName ? previousLastName.replaceAll(/\s*,\s*/g, ', ') : undefined
+        const middleNameBefore = middleNameChanged && previousMiddleName ? previousMiddleName.replaceAll(/\s*,\s*/g, ', ') : undefined
 
         const gender = this.userGenderToProviderCertOrderGender[userGender]
         const birthDate = moment(userBirthDate, this.config.app.dateFormat).format(this.providerDateFormat)

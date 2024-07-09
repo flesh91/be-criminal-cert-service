@@ -49,7 +49,7 @@ describe(`Action ${GetCriminalRecordCertificatesByStatus.name}`, () => {
         // Arrange
         const { headers, session } = testKit.session.getUserActionArguments()
 
-        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettings').mockResolvedValueOnce(publicServiceSettings)
+        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettingsV2').mockResolvedValueOnce(publicServiceSettings)
 
         // Act
         const criminalRecordCertificateList: ActionResult = await getCriminalRecordCertificatesByStatus.handler({
@@ -77,7 +77,7 @@ describe(`Action ${GetCriminalRecordCertificatesByStatus.name}`, () => {
         // Arrange
         const { headers, session } = testKit.session.getUserActionArguments()
 
-        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettings').mockResolvedValueOnce(publicServiceSettings)
+        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettingsV2').mockResolvedValueOnce(publicServiceSettings)
 
         // Act
         const criminalRecordCertificateList: ActionResult = await getCriminalRecordCertificatesByStatus.handler({
@@ -152,7 +152,7 @@ describe(`Action ${GetCriminalRecordCertificatesByStatus.name}`, () => {
             .mockResolvedValueOnce({ signature: Buffer.from('signature').toString('base64') })
             .mockResolvedValueOnce({ signature: Buffer.from('signature').toString('base64') })
         jest.spyOn(external, 'receive').mockResolvedValueOnce(orderDownloadResponse).mockResolvedValueOnce(orderDownloadResponse)
-        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettings').mockResolvedValueOnce(publicServiceSettings)
+        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettingsV2').mockResolvedValueOnce(publicServiceSettings)
 
         // Act
         const criminalRecordCertificateList: ActionResult = await getCriminalRecordCertificatesByStatus.handler({
@@ -176,7 +176,7 @@ describe(`Action ${GetCriminalRecordCertificatesByStatus.name}`, () => {
             total: 2,
         })
 
-        criminalRecordCertificateList.certificates.forEach((criminalCert) => {
+        for (const criminalCert of criminalRecordCertificateList.certificates) {
             expect(criminalCert).toEqual<CriminalRecordCertificateItem>({
                 applicationId: expect.any(String),
                 status: CriminalRecordCertificateStatus.applicationProcessing,
@@ -184,7 +184,7 @@ describe(`Action ${GetCriminalRecordCertificatesByStatus.name}`, () => {
                 creationDate: expect.any(String),
                 type: expect.any(String),
             })
-        })
+        }
     })
 
     it('should return list of user criminal cert orders in done state', async () => {
@@ -232,7 +232,7 @@ describe(`Action ${GetCriminalRecordCertificatesByStatus.name}`, () => {
             signature: Buffer.from('signature').toString('base64'),
         })
         jest.spyOn(external, 'receive').mockResolvedValueOnce({ document: undefined, signature: undefined })
-        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettings').mockResolvedValueOnce(publicServiceSettings)
+        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettingsV2').mockResolvedValueOnce(publicServiceSettings)
 
         // Act
         const criminalRecordCertificateList: ActionResult = await getCriminalRecordCertificatesByStatus.handler({
@@ -256,7 +256,7 @@ describe(`Action ${GetCriminalRecordCertificatesByStatus.name}`, () => {
             total: 2,
         })
 
-        criminalRecordCertificateList.certificates.forEach((criminalCert) => {
+        for (const criminalCert of criminalRecordCertificateList.certificates) {
             expect(criminalCert).toEqual<CriminalRecordCertificateItem>({
                 applicationId: expect.any(String),
                 status: CriminalRecordCertificateStatus.done,
@@ -264,7 +264,7 @@ describe(`Action ${GetCriminalRecordCertificatesByStatus.name}`, () => {
                 creationDate: expect.any(String),
                 type: expect.any(String),
             })
-        })
+        }
     })
 
     it('should check finished orders and return list of user criminal cert orders in done state', async () => {
@@ -315,7 +315,7 @@ describe(`Action ${GetCriminalRecordCertificatesByStatus.name}`, () => {
             document: getPdfFile(),
             signature: Buffer.from('signature').toString('base64'),
         })
-        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettings').mockResolvedValueOnce(publicServiceSettings)
+        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettingsV2').mockResolvedValueOnce(publicServiceSettings)
 
         // Act
         const criminalRecordCertificateList: ActionResult = await getCriminalRecordCertificatesByStatus.handler({
@@ -339,7 +339,7 @@ describe(`Action ${GetCriminalRecordCertificatesByStatus.name}`, () => {
             total: 3,
         })
 
-        criminalRecordCertificateList.certificates.forEach((criminalCert) => {
+        for (const criminalCert of criminalRecordCertificateList.certificates) {
             expect(criminalCert).toEqual<CriminalRecordCertificateItem>({
                 applicationId: expect.any(String),
                 status: CriminalRecordCertificateStatus.done,
@@ -347,6 +347,6 @@ describe(`Action ${GetCriminalRecordCertificatesByStatus.name}`, () => {
                 creationDate: expect.any(String),
                 type: expect.any(String),
             })
-        })
+        }
     })
 })

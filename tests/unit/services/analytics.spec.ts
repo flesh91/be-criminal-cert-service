@@ -2,23 +2,22 @@ import { GrpcClientFactory } from '@diia-inhouse/diia-app'
 
 import { RatingCategory } from '@diia-inhouse/analytics'
 import DiiaLogger from '@diia-inhouse/diia-logger'
-import { EventBus, InternalEvent } from '@diia-inhouse/diia-queue'
+import { EventBus } from '@diia-inhouse/diia-queue'
 import { ServiceUnavailableError } from '@diia-inhouse/errors'
 import TestKit, { mockInstance } from '@diia-inhouse/test'
-import { PublicServiceKebabCaseCode } from '@diia-inhouse/types'
 
 import AnalyticsService from '@services/analytics'
 
+import { analyticsServiceClient } from '@tests/mocks/grpc/clients'
+
 import { AppConfig } from '@interfaces/config'
+import { InternalEvent } from '@interfaces/queue'
 
 describe('AnalyticsService', () => {
     const testKit = new TestKit()
     const grpcClientFactoryMock = mockInstance(GrpcClientFactory)
-    const analyticsServiceClientMock = {
-        getRatingForm: jest.fn(),
-    }
 
-    jest.spyOn(grpcClientFactoryMock, 'createGrpcClient').mockReturnValueOnce(analyticsServiceClientMock)
+    jest.spyOn(grpcClientFactoryMock, 'createGrpcClient').mockReturnValueOnce(analyticsServiceClient)
 
     const config = <AppConfig>{
         grpc: {
@@ -37,7 +36,7 @@ describe('AnalyticsService', () => {
     describe('method `getRatingForm`', () => {
         it('should successfully get rating form', async () => {
             const expectedResult = {
-                ratingStartsAtUnixTime: new Date().getTime(),
+                ratingStartsAtUnixTime: Date.now(),
             }
             const params = {
                 userIdentifier,
@@ -46,11 +45,11 @@ describe('AnalyticsService', () => {
                 statusDate: new Date(),
             }
 
-            analyticsServiceClientMock.getRatingForm.mockReturnValueOnce(expectedResult)
+            jest.spyOn(analyticsServiceClient, 'getRatingForm').mockResolvedValueOnce(expectedResult)
 
             expect(await analyticsService.getRatingForm(params)).toEqual(expectedResult)
 
-            expect(analyticsServiceClientMock.getRatingForm).toHaveBeenCalledWith(params, expect.any(Object))
+            expect(analyticsServiceClient.getRatingForm).toHaveBeenCalledWith(params, expect.any(Object))
         })
     })
 
@@ -58,7 +57,7 @@ describe('AnalyticsService', () => {
         const payload = {
             userIdentifier,
             category: RatingCategory.Document,
-            serviceCode: PublicServiceKebabCaseCode.CriminalRecordCertificate,
+            serviceCode: 'criminal-cert',
         }
 
         it('should successfully notify rate', async () => {

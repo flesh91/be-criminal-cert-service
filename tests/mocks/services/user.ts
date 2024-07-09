@@ -1,8 +1,8 @@
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 
 import { merge } from 'lodash'
 
-import { DocStatus, DocumentType, OwnerType } from '@diia-inhouse/types'
+import { DocStatus, OwnerType } from '@diia-inhouse/types'
 import { UserDocument } from '@diia-inhouse/user-service-client'
 
 export const getTaxpayerCardUserDocument = (data: Partial<UserDocument> = {}): UserDocument => {
@@ -12,7 +12,7 @@ export const getTaxpayerCardUserDocument = (data: Partial<UserDocument> = {}): U
             documentIdentifier: randomUUID(),
             ownerType: OwnerType.owner,
             docStatus: DocStatus.Ok,
-            documentType: DocumentType.TaxpayerCard,
+            documentType: 'taxpayer-card',
             notifications: {},
         },
         data,

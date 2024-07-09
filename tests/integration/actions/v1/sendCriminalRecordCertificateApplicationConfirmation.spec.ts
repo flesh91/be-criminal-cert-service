@@ -1,11 +1,11 @@
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 
 import { InternalServerError, NotFoundError, ServiceUnavailableError } from '@diia-inhouse/errors'
 import TestKit from '@diia-inhouse/test'
-import { PublicServiceCode } from '@diia-inhouse/types'
 
 import {
     CriminalRecordCertificateType,
+    PublicServiceCode,
     SendCriminalRecordCertificateApplicationConfirmationResponse,
 } from '@src/generated/criminal-cert-service'
 

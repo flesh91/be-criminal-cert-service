@@ -28,7 +28,7 @@ describe('GetCriminalRecordCertificateApplicationBirthPlaceAction', () => {
                         checkbox: 'Країни немає в списку',
                         otherCountry: {
                             label: 'Країна',
-                            hint: 'Введіть назву країни самостіно',
+                            hint: 'Введіть назву країни самостійно',
                         },
                     },
                     city: {

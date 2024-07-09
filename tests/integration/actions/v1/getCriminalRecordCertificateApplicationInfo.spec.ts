@@ -2,12 +2,13 @@ import moment from 'moment'
 
 import { PublicServiceCatalogClient } from '@diia-inhouse/public-service-catalog-client'
 import TestKit from '@diia-inhouse/test'
-import { DocStatus, PublicServiceCode } from '@diia-inhouse/types'
+import { DocStatus } from '@diia-inhouse/types'
 
 import {
     CriminalRecordCertificateApplicationScreen,
     CriminalRecordCertificateStatus,
     GetCriminalRecordCertificateApplicationInfoResponse,
+    PublicServiceCode,
 } from '@src/generated'
 
 import GetCriminalRecordCertificateApplicationInfo from '@actions/v1/getCriminalRecordCertificateApplicationInfo'
@@ -55,7 +56,7 @@ describe(`Action ${GetCriminalRecordCertificateApplicationInfo.name}`, () => {
         const { headers, session } = testKit.session.getUserActionArguments()
         const taxpayerCardUserDocument = getTaxpayerCardUserDocument({ userIdentifier: session.user.identifier })
 
-        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettings').mockResolvedValueOnce(publicServiceSettings)
+        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettingsV2').mockResolvedValueOnce(publicServiceSettings)
         jest.spyOn(userService, 'getUserDocuments').mockResolvedValueOnce({ documents: [taxpayerCardUserDocument] })
 
         // Act
@@ -79,7 +80,7 @@ describe(`Action ${GetCriminalRecordCertificateApplicationInfo.name}`, () => {
         const { headers, session } = testKit.session.getUserActionArguments()
         const taxpayerCardUserDocument = getTaxpayerCardUserDocument({ userIdentifier: session.user.identifier })
 
-        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettings').mockResolvedValueOnce(publicServiceSettings)
+        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettingsV2').mockResolvedValueOnce(publicServiceSettings)
         jest.spyOn(userService, 'getUserDocuments').mockResolvedValueOnce({ documents: [taxpayerCardUserDocument] })
 
         // Act
@@ -103,11 +104,11 @@ describe(`Action ${GetCriminalRecordCertificateApplicationInfo.name}`, () => {
         const { headers, session } = testKit.session.getUserActionArguments()
         const taxpayerCardUserDocument = getTaxpayerCardUserDocument({ userIdentifier: session.user.identifier })
 
-        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettings').mockResolvedValueOnce(publicServiceSettings)
+        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettingsV2').mockResolvedValueOnce(publicServiceSettings)
         jest.spyOn(userService, 'getUserDocuments').mockResolvedValueOnce({ documents: [taxpayerCardUserDocument] })
 
         const {
-            user: { identifier: userIdentifier },
+            user: { identifier: userIdentifier, fName },
         } = session
         const { mobileUid } = headers
 
@@ -133,7 +134,7 @@ describe(`Action ${GetCriminalRecordCertificateApplicationInfo.name}`, () => {
 
         // Assert
         expect(criminalRecordCertificateApplicationInfo).toEqual<GetCriminalRecordCertificateApplicationInfoResponse>({
-            title: `Вітаємо, ${session.user.fName} 👋`,
+            title: `Вітаємо, ${fName} 👋`,
             attentionMessage: criminalRecordCertificateMapper.processingApplicationExistsMessage,
         })
     })
@@ -145,7 +146,7 @@ describe(`Action ${GetCriminalRecordCertificateApplicationInfo.name}`, () => {
         })
         const taxpayerCardUserDocument = getTaxpayerCardUserDocument({ userIdentifier: session.user.identifier })
 
-        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettings').mockResolvedValueOnce(publicServiceSettings)
+        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettingsV2').mockResolvedValueOnce(publicServiceSettings)
         jest.spyOn(userService, 'getUserDocuments').mockResolvedValueOnce({ documents: [taxpayerCardUserDocument] })
 
         // Act
@@ -170,7 +171,7 @@ describe(`Action ${GetCriminalRecordCertificateApplicationInfo.name}`, () => {
             docStatus: DocStatus.Confirming,
         })
 
-        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettings').mockResolvedValueOnce(publicServiceSettings)
+        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettingsV2').mockResolvedValueOnce(publicServiceSettings)
         jest.spyOn(userService, 'getUserDocuments').mockResolvedValueOnce({ documents: [taxpayerCardUserDocument] })
 
         // Act
@@ -191,7 +192,7 @@ describe(`Action ${GetCriminalRecordCertificateApplicationInfo.name}`, () => {
         // Arrange
         const { headers, session } = testKit.session.getUserActionArguments()
 
-        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettings').mockResolvedValueOnce(publicServiceSettings)
+        jest.spyOn(publicServiceCatalogClient, 'getPublicServiceSettingsV2').mockResolvedValueOnce(publicServiceSettings)
         jest.spyOn(userService, 'getUserDocuments').mockResolvedValueOnce({ documents: [] })
 
         // Act

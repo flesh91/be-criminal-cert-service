@@ -1,7 +1,6 @@
 import TestKit, { mockInstance } from '@diia-inhouse/test'
-import { PublicServiceCode } from '@diia-inhouse/types'
 
-import { CriminalRecordCertificateApplicationScreen } from '@src/generated/criminal-cert-service'
+import { CriminalRecordCertificateApplicationScreen, PublicServiceCode } from '@src/generated'
 
 import GetCriminalRecordCertificateApplicationInfoAction from '@actions/v1/getCriminalRecordCertificateApplicationInfo'
 

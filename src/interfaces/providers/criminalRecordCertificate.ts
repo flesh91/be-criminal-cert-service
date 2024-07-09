@@ -1,4 +1,4 @@
-import { PublicServiceCode } from '@diia-inhouse/types'
+import { PublicServiceCode } from '@src/generated'
 
 export enum CriminalRecordCertOrderType {
     Short = 'SHORT',

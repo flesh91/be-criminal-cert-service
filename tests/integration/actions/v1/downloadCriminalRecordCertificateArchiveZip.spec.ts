@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 
 import { CryptoDocServiceClient } from '@diia-inhouse/diia-crypto-client'
 import { ExternalCommunicator } from '@diia-inhouse/diia-queue'

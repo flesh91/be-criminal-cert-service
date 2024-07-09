@@ -1,11 +1,12 @@
 import TestKit from '@diia-inhouse/test'
-import { AppUserActionHeaders, PublicServiceCode, UserSession } from '@diia-inhouse/types'
+import { AppUserActionHeaders, UserSession } from '@diia-inhouse/types'
 
 import {
     CriminalRecordCertificate,
     CriminalRecordCertificatePublicService,
     CriminalRecordCertificateStatus,
     CriminalRecordCertificateType,
+    PublicServiceCode,
 } from '@src/generated'
 
 import CheckCriminalRecordCertificateForPublicServiceAction from '@actions/v1/checkCriminalRecordCertificateForPublicService'

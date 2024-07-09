@@ -1,6 +1,4 @@
-import { asClass } from 'awilix'
-
-import { DepsFactoryFn } from '@diia-inhouse/diia-app'
+import { DepsFactoryFn, asClass } from '@diia-inhouse/diia-app'
 
 import { IdentifierService } from '@diia-inhouse/crypto'
 import TestKit from '@diia-inhouse/test'
@@ -12,9 +10,9 @@ import { TestDeps } from '@tests/interfaces'
 import { AppConfig } from '@interfaces/config'
 import { AppDeps } from '@interfaces/deps'
 
-export default (config: AppConfig): ReturnType<DepsFactoryFn<AppConfig, AppDeps & TestDeps>> => {
+export default async (config: AppConfig): ReturnType<DepsFactoryFn<AppConfig, AppDeps & TestDeps>> => {
     return {
-        ...deps(config),
+        ...(await deps(config)),
         testKit: asClass(TestKit).singleton(),
         identifier: asClass(IdentifierService, { injector: () => ({ identifierConfig: { salt: 'TEST_SALT' } }) }).singleton(),
     }
