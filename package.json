@@ -88,7 +88,7 @@
         "@diia-inhouse/user-service-client": "1.0.0-133769",
         "@diia-inhouse/utils": "3.5.0",
         "@diia-inhouse/validators": "1.17.0",
-        "adm-zip": "0.5.10",
+        "adm-zip": "0.5.16",
         "lodash": "4.17.21",
         "migrate-mongo": "11.0.0",
         "module-alias": "2.2.3",
