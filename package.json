@@ -70,7 +70,7 @@
         "@diia-inhouse/analytics-service-client": "1.0.0-121540",
         "@diia-inhouse/crypto": "1.11.0",
         "@diia-inhouse/db": "4.10.0",
-        "@diia-inhouse/diia-app": "18.0.0",
+        "@diia-inhouse/diia-app": "18.2.0",
         "@diia-inhouse/diia-crypto-client": "1.0.0-94617",
         "@diia-inhouse/diia-logger": "3.2.0",
         "@diia-inhouse/diia-metrics": "3.12.0",
