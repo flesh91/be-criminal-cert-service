@@ -84,7 +84,7 @@
         "@diia-inhouse/public-service-catalog-client": "1.0.0-136924",
         "@diia-inhouse/public-service-service-client": "1.0.0-119061",
         "@diia-inhouse/redis": "2.12.0",
-        "@diia-inhouse/types": "6.30.0",
+        "@diia-inhouse/types": "6.92.0",
         "@diia-inhouse/user-service-client": "1.0.0-133769",
         "@diia-inhouse/utils": "3.5.0",
         "@diia-inhouse/validators": "1.17.0",
